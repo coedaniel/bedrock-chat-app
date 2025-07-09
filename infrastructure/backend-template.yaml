@@ -5,8 +5,12 @@ Description: 'Bedrock Chat Backend - Lambda function with API Gateway'
 Parameters:
   Environment:
     Type: String
-    Default: 'dev'
-    Description: Environment name
+    Default: 'prod'
+    Description: Environment name (dev, staging, prod)
+    AllowedValues:
+      - dev
+      - staging
+      - prod
 
 Globals:
   Function:
@@ -22,7 +26,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub 'bedrock-chat-${Environment}'
-      CodeUri: lambda/
+      CodeUri: ../lambda/
       Handler: chat-handler.lambda_handler
       Runtime: python3.9
       Timeout: 30
@@ -104,14 +108,20 @@ Resources:
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BedrockChatFunction.Arn}/invocations'
 
 Outputs:
-  BedrockChatApi:
+  BedrockChatApiUrl:
     Description: 'API Gateway endpoint URL for Bedrock Chat function'
     Value: !Sub 'https://${BedrockChatApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/chat'
     Export:
-      Name: !Sub '${AWS::StackName}-BedrockChatApi'
+      Name: !Sub '${AWS::StackName}-BedrockChatApiUrl'
   
-  BedrockChatFunction:
+  BedrockChatFunctionArn:
     Description: 'Bedrock Chat Lambda Function ARN'
     Value: !GetAtt BedrockChatFunction.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-BedrockChatFunction'
+      Name: !Sub '${AWS::StackName}-BedrockChatFunctionArn'
+
+  ApiGatewayId:
+    Description: 'API Gateway ID'
+    Value: !Ref BedrockChatApi
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayId'

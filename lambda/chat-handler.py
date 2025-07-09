@@ -57,24 +57,44 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'No messages provided'})
             }
 
-        # Get the last user message
-        user_message = messages[-1]['content'] if messages else ""
+        # Convert messages to Bedrock format and ensure alternating roles
+        bedrock_messages = []
+        last_role = None
+        
+        for msg in messages:
+            current_role = msg['role']
+            
+            # Skip consecutive messages with the same role (except the first one)
+            if last_role == current_role:
+                # If we have consecutive user messages, combine them
+                if current_role == 'user' and bedrock_messages:
+                    bedrock_messages[-1]['content'] += f"\n\n{msg['content']}"
+                    continue
+                # If we have consecutive assistant messages, skip the previous one
+                elif current_role == 'assistant' and bedrock_messages:
+                    bedrock_messages[-1] = {
+                        "role": current_role,
+                        "content": msg['content']
+                    }
+                    continue
+            
+            bedrock_messages.append({
+                "role": current_role,
+                "content": msg['content']
+            })
+            last_role = current_role
 
         # Prepare the request for Bedrock
         if model_id.startswith('anthropic.claude'):
-            # Claude format
+            # Claude format - send full conversation history
             request_body = {
                 "anthropic_version": "bedrock-2023-05-31",
                 "max_tokens": 1000,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": user_message
-                    }
-                ]
+                "messages": bedrock_messages
             }
         elif model_id.startswith('amazon.titan'):
-            # Titan format
+            # Titan format - use last message only (Titan doesn't support conversation history)
+            user_message = messages[-1]['content'] if messages else ""
             request_body = {
                 "inputText": user_message,
                 "textGenerationConfig": {
@@ -84,7 +104,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             }
         else:
-            # Default format
+            # Default format - use last message only
+            user_message = messages[-1]['content'] if messages else ""
             request_body = {
                 "inputText": user_message,
                 "textGenerationConfig": {

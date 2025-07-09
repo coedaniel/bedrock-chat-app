@@ -1,0 +1,50 @@
+{
+  "name": "bedrock-chat-app",
+  "version": "1.0.0",
+  "description": "A modern chat application built with Next.js and AWS Bedrock",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bedrock-chat-app.git"
+  },
+  "aws": {
+    "region": "us-east-1",
+    "environments": {
+      "dev": {
+        "stackName": "bedrock-chat-backend-dev",
+        "stage": "dev"
+      },
+      "staging": {
+        "stackName": "bedrock-chat-backend-staging",
+        "stage": "staging"
+      },
+      "prod": {
+        "stackName": "bedrock-chat-backend-prod",
+        "stage": "prod"
+      }
+    }
+  },
+  "bedrock": {
+    "defaultModel": "anthropic.claude-3-haiku-20240307-v1:0",
+    "supportedModels": [
+      "anthropic.claude-3-haiku-20240307-v1:0",
+      "amazon.titan-text-lite-v1",
+      "amazon.titan-text-express-v1",
+      "amazon.nova-micro-v1:0",
+      "amazon.nova-lite-v1:0"
+    ]
+  },
+  "frontend": {
+    "framework": "Next.js 14",
+    "styling": "Tailwind CSS",
+    "stateManagement": "Zustand",
+    "hosting": "AWS Amplify"
+  },
+  "backend": {
+    "runtime": "Python 3.9",
+    "framework": "AWS Lambda",
+    "api": "API Gateway",
+    "iac": "AWS SAM"
+  }
+}
