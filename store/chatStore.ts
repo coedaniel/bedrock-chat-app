@@ -18,7 +18,7 @@ type ChatStore = {
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
-  modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
+  modelId: 'anthropic.claude-3-haiku-20240307-v1:0',
   isLoading: false,
   
   setModelId: (id) => set({ modelId: id }),

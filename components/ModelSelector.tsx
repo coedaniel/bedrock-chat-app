@@ -4,11 +4,6 @@ import { useChatStore } from '@/store/chatStore'
 
 const models = [
   { 
-    id: 'anthropic.claude-3-sonnet-20240229-v1:0', 
-    name: 'Claude 3 Sonnet',
-    description: 'Equilibrio entre inteligencia y velocidad'
-  },
-  { 
     id: 'anthropic.claude-3-haiku-20240307-v1:0', 
     name: 'Claude 3 Haiku',
     description: 'Rápido y eficiente'
@@ -24,9 +19,14 @@ const models = [
     description: 'Modelo express de Amazon'
   },
   { 
-    id: 'ai21.j2-mid-v1', 
-    name: 'Jurassic-2 Mid',
-    description: 'Modelo intermedio de AI21'
+    id: 'amazon.nova-micro-v1:0', 
+    name: 'Nova Micro',
+    description: 'Modelo compacto de Amazon'
+  },
+  { 
+    id: 'amazon.nova-lite-v1:0', 
+    name: 'Nova Lite',
+    description: 'Modelo ligero multimodal'
   }
 ]
 
