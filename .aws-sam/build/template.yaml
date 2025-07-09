@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Bedrock Chat Backend - Lambda function with API Gateway
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    Description: Environment name
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.9
+    Environment:
+      Variables:
+        ENVIRONMENT:
+          Ref: Environment
+Resources:
+  BedrockChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: bedrock-chat-${Environment}
+      CodeUri: BedrockChatFunction
+      Handler: chat-handler.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          ENVIRONMENT:
+            Ref: Environment
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - bedrock:InvokeModel
+          - bedrock:InvokeModelWithResponseStream
+          Resource:
+          - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-*
+          - arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-*
+          - arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-*
+      Events:
+        ChatApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: BedrockChatApi
+            Path: /chat
+            Method: post
+        ChatOptions:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: BedrockChatApi
+            Path: /chat
+            Method: options
+    Metadata:
+      SamResourceId: BedrockChatFunction
+  BedrockChatApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Sub: bedrock-chat-api-${Environment}
+      StageName:
+        Ref: Environment
+      Cors:
+        AllowMethods: '''POST, OPTIONS'''
+        AllowHeaders: '''Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'''
+        AllowOrigin: '''*'''
+      DefinitionBody:
+        openapi: 3.0.1
+        info:
+          title: Bedrock Chat API
+          version: 1.0.0
+        paths:
+          /chat:
+            post:
+              responses:
+                '200':
+                  description: Successful response
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BedrockChatFunction.Arn}/invocations
+            options:
+              responses:
+                '200':
+                  description: CORS response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: string
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BedrockChatFunction.Arn}/invocations
+Outputs:
+  BedrockChatApi:
+    Description: API Gateway endpoint URL for Bedrock Chat function
+    Value:
+      Fn::Sub: https://${BedrockChatApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/chat
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-BedrockChatApi
+  BedrockChatFunction:
+    Description: Bedrock Chat Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - BedrockChatFunction
+      - Arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-BedrockChatFunction

@@ -33,20 +33,26 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }))
 
     try {
-      // Simulate a delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      const res = await fetch('https://dorv2m7dbh.execute-api.us-east-1.amazonaws.com/prod/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...get().messages, userMessage],
+          modelId: get().modelId
+        })
+      })
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+
+      const data = await res.json()
       const botMessage: Message = { 
         id: uuid(), 
         role: 'assistant', 
-        content: `Esta es una implementación estática de demostración. Para habilitar la integración real con Amazon Bedrock, necesitarías:
-
-1. Desplegar un backend con AWS Lambda que tenga permisos para llamar a Bedrock
-2. Configurar API Gateway para exponer el endpoint
-3. Actualizar este frontend para llamar a tu API real
-
-Modelo seleccionado: ${get().modelId}
-Tu mensaje fue: "${content}"`
+        content: data.response || 'Error: No response received'
       }
       
       set((state) => ({ 
@@ -58,7 +64,7 @@ Tu mensaje fue: "${content}"`
       const errorMessage: Message = { 
         id: uuid(), 
         role: 'assistant', 
-        content: 'Error: Failed to process message'
+        content: 'Error: Failed to get response from Bedrock. Please check your connection and try again.'
       }
       
       set((state) => ({ 
